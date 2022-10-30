@@ -1,0 +1,13 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+warp = "0.3.3"
+parking_lot = "0.12.1"
+serde =  { version ="1.0.147", features = ["derive"] }
+opencv = "0.71.0"
+tokio = { version = "1.21.2", features = ["macros", "rt-multi-thread"] }
