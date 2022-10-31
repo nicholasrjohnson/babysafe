@@ -46,8 +46,6 @@ public class SecondFragment extends Fragment {
             try {
                 HttpResponse response = client.execute(new HttpGet(url));
                 StatusLine statusLine = response.getStatusLine();
-                int MAX_SIZE = 1024 * 1000 * 10;
-                byte[] jsonByteArray = new byte[MAX_SIZE];
                 if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
                     HttpEntity entity = response.getEntity();
                     InputStream stream = entity.getContent();
@@ -57,11 +55,11 @@ public class SecondFragment extends Fragment {
                     long hasRead = 0;
                     while (hasRead < contentLength)
                         hasRead += reader.read(jsonChars, (int) hasRead, (int) (contentLength - hasRead));
-                    int size = reader.read(jsonChars);
                     JSONObject obj = new JSONObject(new String(jsonChars));
                     String image = obj.getString("image");
                     imageBytes = Base64.getDecoder().decode(image);
                     response.getEntity().getContent().close();
+                    reader.close();
                 } else {
                     response.getEntity().getContent().close();
                     throw new IOException(statusLine.getReasonPhrase());
