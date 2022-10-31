@@ -11,3 +11,4 @@ parking_lot = "0.12.1"
 serde =  { version ="1.0.147", features = ["derive"] }
 opencv = "0.71.0"
 tokio = { version = "1.21.2", features = ["macros", "rt-multi-thread"] }
+base64 = "0.13.1"

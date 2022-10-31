@@ -2,6 +2,7 @@ use warp::{Filter};
 use std::collections::HashMap;
 use parking_lot::RwLock;
 use serde::{Serialize, Deserialize};
+use base64;
 use std::sync::Arc;
 use std::str;
 use opencv::{
@@ -70,11 +71,11 @@ async fn get_image(
 
         let encoded_image = &mut Vector::<u8>::new();
 
-        let flag = opencv::imgcodecs::imencode(".JPG", &frame, encoded_image, &Vector::<i32>::new()).unwrap();
+        let flag = opencv::imgcodecs::imencode(".jpg", &frame, encoded_image, &Vector::<i32>::new()).unwrap();
 
         let image_vector = encoded_image.as_slice();
 
-        let s = (String::from_utf8_lossy(image_vector)).to_string();
+        let s = base64::encode(image_vector);
 
         match flag {
             true => { result.insert(&image_string, &s); 
