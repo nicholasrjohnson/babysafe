@@ -12,6 +12,7 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import com.babysafe.babysafetestclient.databinding.FragmentSecondBinding;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -21,13 +22,59 @@ import org.apache.http.impl.client.HttpClients;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.Base64;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class SecondFragment extends Fragment {
 
     private FragmentSecondBinding binding;
     private static HttpClient client;
-    private final static String url = "http://10.0.0.56:8000";
+    private final static String url = "http://10.0.0.56:8000/babysafe/image";
+
+    private static class GetImage implements Callable<byte[]> {
+        @Override
+        public byte[] call() {
+            byte[] imageBytes = new byte[0];
+            try {
+                HttpResponse response = client.execute(new HttpGet(url));
+                StatusLine statusLine = response.getStatusLine();
+                int MAX_SIZE = 1024 * 1000 * 10;
+                byte[] jsonByteArray = new byte[MAX_SIZE];
+                if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
+                    HttpEntity entity = response.getEntity();
+                    InputStream stream = entity.getContent();
+                    long contentLength = entity.getContentLength();
+                    char[] jsonChars = new char[(int) contentLength];
+                    InputStreamReader reader = new InputStreamReader(stream);
+                    long hasRead = 0;
+                    while (hasRead < contentLength)
+                        hasRead += reader.read(jsonChars, (int) hasRead, (int) (contentLength - hasRead));
+                    int size = reader.read(jsonChars);
+                    JSONObject obj = new JSONObject(new String(jsonChars));
+                    String image = obj.getString("image");
+                    imageBytes = Base64.getDecoder().decode(image);
+                    response.getEntity().getContent().close();
+                } else {
+                    response.getEntity().getContent().close();
+                    throw new IOException(statusLine.getReasonPhrase());
+                }
+            } catch (IOException e) {
+                System.out.println("There has been an IO exception: " + e);
+            } catch (JSONException e) {
+                System.out.println("There has been a Json exception: " + e);
+            }
+
+            return imageBytes;
+        }
+    }
 
     @Override
     public View onCreateView(
@@ -55,32 +102,17 @@ public class SecondFragment extends Fragment {
         binding.buttonImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                byte[] bytes = new byte[0];
+                GetImage func = new GetImage();
                 try {
-                    HttpResponse response = client.execute(new HttpGet(url));
-                    StatusLine statusLine = response.getStatusLine();
-                    int MAX_SIZE = 1024 * 1000 * 10;
-                    byte[] jsonByteArray = new byte[MAX_SIZE];
-                    if (statusLine.getStatusCode() == HttpStatus.SC_OK) {
-                        int size = response.getEntity().getContent().read(jsonByteArray);
-                        byte[] fullJsonByteArray = new byte[size];
-                        for (int i = 0; i <fullJsonByteArray.length; i++) fullJsonByteArray[i] = jsonByteArray[i];
-                        JSONObject obj = new JSONObject(fullJsonByteArray.toString());
-                        byte[] image = (byte[]) obj.get("image");
-                        binding.imageView.setImageBitmap(BitmapFactory.decodeByteArray(image, 0, image.length));
-                    }
-                    else
-                    {
-                        response.getEntity().getContent().close();
-                        throw new IOException(statusLine.getReasonPhrase());
-                    }
+                    Future<byte[]> imageFuture = Executors.newCachedThreadPool().submit(func);
+                    bytes = imageFuture.get();
                 }
-                catch (IOException e) {
-                   System.out.println("There has been an IO exception: " + e);
-                }
-                catch (JSONException e)
+                catch (InterruptedException | ExecutionException e)
                 {
-                   System.out.println("There has been a Json exception: " + e);
+                    e.printStackTrace();
                 }
+                binding.imageView.setImageBitmap(BitmapFactory.decodeByteArray(bytes, 0, bytes.length));
             }
         });
 
@@ -92,5 +124,4 @@ public class SecondFragment extends Fragment {
         binding = null;
         client = null;
     }
-
 }
