@@ -9,8 +9,11 @@ use opencv::{
     prelude::*,
     videoio,
     core::Vector,
+    core::Scalar,
     core::in_range,
-    core::bitwise_and;
+    core::bitwise_and,
+    imgproc::cvt_color,
+    imgproc::COLOR_RGB2HSV,
 };
 
 type Payload = HashMap<String, String>;
@@ -73,28 +76,23 @@ async fn get_image(
 
         let encoded_image = &mut Vector::<u8>::new();
 
-        let flag = opencv::imgcodecs::imencode(".jpg", &frame, encoded_image, &Vector::<i32>::new()).unwrap();
+        let flag = opencv::imgcodecs::imencode(".bmp", &frame, encoded_image, &Vector::<i32>::new()).unwrap();
 
+        let hsv_encoded_image = &mut Vector::<u8>::new(); 
 
-        let mask  = &mut Vector::<u8>::new();
+        cvt_color(encoded_image,hsv_encoded_image,COLOR_RGB2HSV, 3).unwrap(); 
 
-        let mut lower_bound = Vector::<i32>::new();
+        let mask  = &mut Mat::default();
+
+        let lower_bound = Scalar::new(50.0,50.0,50.0,50.0);
             
-        let mut upper_bound = Vector::<i32>::new(); 
+        let upper_bound = Scalar::new(60.0,0.0,255.0,00.0); 
 
-        lower_bound.push(20);
-        lower_bound.push(20);
-        lower_bound.push(200);
-
-        upper_bound.push(0);
-        upper_bound.push(0);
-        upper_bound.push(255);
-
-        in_range(encoded_image, &lower_bound, &upper_bound, mask).unwrap();
+        in_range(hsv_encoded_image, &lower_bound, &upper_bound, mask).unwrap();
 
         let red_image = &mut Vector::<u8>::new();
 
-        bitwise_and(&encoded_image, &encoded_image, red_image, mask);
+        bitwise_and(encoded_image, encoded_image, red_image, mask).unwrap();
 
         let image_vector = red_image.as_slice();
 
