@@ -9,6 +9,8 @@ use opencv::{
     prelude::*,
     videoio,
     core::Vector,
+    core::in_range,
+    core::bitwise_and;
 };
 
 type Payload = HashMap<String, String>;
@@ -73,7 +75,28 @@ async fn get_image(
 
         let flag = opencv::imgcodecs::imencode(".jpg", &frame, encoded_image, &Vector::<i32>::new()).unwrap();
 
-        let image_vector = encoded_image.as_slice();
+
+        let mask  = &mut Vector::<u8>::new();
+
+        let mut lower_bound = Vector::<i32>::new();
+            
+        let mut upper_bound = Vector::<i32>::new(); 
+
+        lower_bound.push(20);
+        lower_bound.push(20);
+        lower_bound.push(200);
+
+        upper_bound.push(0);
+        upper_bound.push(0);
+        upper_bound.push(255);
+
+        in_range(encoded_image, &lower_bound, &upper_bound, mask).unwrap();
+
+        let red_image = &mut Vector::<u8>::new();
+
+        bitwise_and(&encoded_image, &encoded_image, red_image, mask);
+
+        let image_vector = red_image.as_slice();
 
         let s = base64::encode(image_vector);
 
