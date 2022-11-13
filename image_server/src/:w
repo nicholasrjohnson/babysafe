@@ -83,17 +83,28 @@ async fn get_image(
         let params = &mut Vector::<i32>::new();
         let encoded_image = &mut Vector::<u8>::new();
 
-        let red_image = &mut Mat::default();
+        //params.push(opencv::imgcodecs::IM
+            
+        let patch = &mut Mat::default();
+        let size = opencv::core::Size::new(1920, 1080);
+        let point = opencv::core::Point2f::new( 960 as f32,  540 as f32);
 
-        let lower_bound = Scalar::from((0 as f64, 0 as f64, 0 as f64));
+        opencv::imgproc::get_rect_sub_pix(&frame, size, point, patch, opencv::core::CV_u8C2).unwrap(); 
+
+        let flag = opencv::imgcodecs::imencode(".bmp", patch, encoded_image, params).unwrap();
+
+        let red_image = &mut Vector::<u8>::new();
+
+        let low_bound = Scalar::from((0 as f64, 0 as f64, 0 as f64));
         let upper_bound = Scalar::from((255 as f64, 255 as f64, 255 as f64));
 
-        in_range(&frame, &lower_bound, &upper_bound, mask).unwrap();
+        in_range(encoded_image, &low_bound, &upper_bound, mask).unwrap();
 
-        bitwise_and(&frame, &frame, red_image, mask).unwrap();
+        bitwise_and(encoded_image, encoded_image, red_image, mask).unwrap();
 
-        let flag = opencv::imgcodecs::imencode(".bmp", red_image , encoded_image, params).unwrap();
-        let s = base64::encode(encoded_image);
+        let image_vector = red_image.as_slice();
+
+        let s = base64::encode(image_vector);
 
         match flag {
             true => { result.insert(&image_string, &s); 
