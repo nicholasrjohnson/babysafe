@@ -12,8 +12,6 @@ use opencv::{
     core::Scalar,
     core::in_range,
     core::bitwise_and,
-    imgproc::cvt_color,
-    imgproc::COLOR_RGB2HSV,
 };
 
 type Payload = HashMap<String, String>;
@@ -74,23 +72,24 @@ async fn get_image(
         cam.read(&mut frame).unwrap();
         let image_string = "image".to_string();
 
-        let encoded_image = &mut Vector::<u8>::new();
 
-        let flag = opencv::imgcodecs::imencode(".bmp", &frame, encoded_image, &Vector::<i32>::new()).unwrap();
+        //let hsv_encoded_image = &mut Vector::<u8>::new(); 
 
-        let hsv_encoded_image = &mut Vector::<u8>::new(); 
+        //cvt_color(&frame,hsv_encoded_image,opencv::imgproc::COLOR_BGR2HLS, 0).unwrap(); 
 
-        cvt_color(encoded_image,hsv_encoded_image,COLOR_RGB2HSV, 3).unwrap(); 
-
+        
         let mask  = &mut Mat::default();
 
-        let lower_bound = Scalar::new(50.0,50.0,50.0,50.0);
-            
-        let upper_bound = Scalar::new(60.0,0.0,255.0,00.0); 
-
-        in_range(hsv_encoded_image, &lower_bound, &upper_bound, mask).unwrap();
+        let params = &mut Vector::<i32>::new();
+        let encoded_image = &mut Vector::<u8>::new();
+        let flag = opencv::imgcodecs::imencode(".jpeg", &frame , encoded_image, params).unwrap();
 
         let red_image = &mut Vector::<u8>::new();
+
+        let low_bound = Scalar::from((100 as f64, 0 as f64, 0 as f64));
+        let upper_bound = Scalar::from((255 as f64, 0 as f64, 0 as f64));
+
+        in_range(encoded_image, &low_bound, &upper_bound, mask).unwrap();
 
         bitwise_and(encoded_image, encoded_image, red_image, mask).unwrap();
 
