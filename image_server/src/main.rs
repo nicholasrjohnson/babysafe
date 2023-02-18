@@ -53,7 +53,7 @@ async fn main() {
     let routes = get_image;
     
     warp::serve(routes)
-    .run(([10, 0, 0, 56], 8000))
+    .run(([10, 0, 0, 54], 8000))
     .await;
 }
 
