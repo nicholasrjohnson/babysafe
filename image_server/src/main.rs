@@ -85,8 +85,8 @@ async fn get_image(
 
         let red_image = &mut Mat::default();
 
-        let lower_bound = Scalar::from((0 as f64, 0 as f64, 0 as f64));
-        let upper_bound = Scalar::from((255 as f64, 255 as f64, 255 as f64));
+        let lower_bound = Scalar::from((0 as f64, 0 as f64, 100 as f64));
+        let upper_bound = Scalar::from((100 as f64, 100 as f64, 255 as f64));
 
         in_range(&frame, &lower_bound, &upper_bound, mask).unwrap();
 
