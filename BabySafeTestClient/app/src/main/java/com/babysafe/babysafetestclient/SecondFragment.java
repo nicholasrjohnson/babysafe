@@ -37,7 +37,7 @@ public class SecondFragment extends Fragment {
 
     private FragmentSecondBinding binding;
     private static HttpClient client;
-    private final static String url = "http://10.0.0.56:8000/babysafe/image";
+    private final static String url = "http://10.0.0.54:8000/babysafe/image";
 
     private static class GetImage implements Callable<byte[]> {
         @Override
